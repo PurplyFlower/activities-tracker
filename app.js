@@ -710,6 +710,12 @@ onAuthStateChanged(auth, (user) => {
     $("statusText").textContent = `Signed in as ${user.email || "user"}`;
     $("btnAuth").textContent = "Account";
     show($("btnLogout"));
+
+    // Show navigation + add button when logged in
+    $("navOrgs").classList.remove("hidden");
+    $("navTimeline").classList.remove("hidden");
+    $("btnAdd").classList.remove("hidden");
+    
     startSubscriptions(user.uid);
 
     if ((window.location.hash || "").startsWith("#/auth")) {
@@ -721,6 +727,12 @@ onAuthStateChanged(auth, (user) => {
     state.activities = [];
     state.orgSettings = new Map();
     state.currentOrg = null;
+
+    // Hide navigation + add button when logged out
+    $("navOrgs").classList.add("hidden");
+    $("navTimeline").classList.add("hidden");
+    $("btnAdd").classList.add("hidden");
+    
     renderAuth();
   }
 
