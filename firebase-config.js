@@ -8,7 +8,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/fireba
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-// TODO: paste your Firebase web app config here:
 const firebaseConfig = {
   apiKey: "AIzaSyD9_L1PJhAoGTuuKqa-B52JL0POgULk4Sc",
   authDomain: "activities-tracker-24cfb.firebaseapp.com",
