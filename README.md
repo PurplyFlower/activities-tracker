@@ -1,10 +1,11 @@
-# Extracurricular Tracker (GitHub Pages)
+# Activities Tracker
 
-Minimalist dark tracker for extracurriculars / volunteering.
+Tracker for pre-med extracurriculars.
+Access Here: https://purplyflower.github.io/activities-tracker/
 
 **Features**
-- Orgs cards (total hours, start date, end date; end date can be marked as **Present**)
-- Org detail view (sortable/filterable activities + totals by type + "Mark as ongoing" toggle)
+- Organization cards (total hours, start date, end date)
+- Organization detail view (sortable/filterable activities + totals by type)
 - Timeline view (chronological list)
 - Add/Edit/Delete activities
 - Login via Firebase Auth
