@@ -90,8 +90,8 @@ const state = {
   currentOrg: null,
 };
 
-function show(el) { el.classList.remove("hidden"); }
-function hide(el) { el.classList.add("hidden"); }
+function show(el) { if (!el) return; el.classList.remove("hidden"); }
+function hide(el) { if (!el) return; el.classList.add("hidden"); }
 
 function setActiveNav(route) {
   const map = { orgs: $("navOrgs"), timeline: $("navTimeline") };
@@ -615,7 +615,7 @@ function escapeHtml(s) {
 ------------------------------ */
 on("btnAuth", "click", () => {
   window.location.hash = "#/auth";
-  route();
+  renderAuth();
 });
 
 
@@ -845,3 +845,14 @@ onAuthStateChanged(auth, (user) => {
     state.currentOrg = null;
     renderAuth();
   }
+
+  route();
+});
+
+window.addEventListener("hashchange", route);
+if (!window.location.hash) window.location.hash = "#/orgs";
+
+
+// Ensure routing runs after page load and on hash changes
+window.addEventListener("load", () => route());
+window.addEventListener("hashchange", () => route());
