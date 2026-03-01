@@ -49,6 +49,7 @@ import {
  * {
  *   uid: string,
  *   org: string,
+ *   ongoing: boolean,
  *   updatedAt: serverTimestamp
  * }
  */
@@ -158,6 +159,8 @@ function renderOrgs() {
   else hide($("orgEmpty"));
 
   for (const o of orgs) {
+    const endShown = o.ongoing ? "Present" : (o.endDate || "—");
+
     const card = document.createElement("div");
     card.className = "card";
     card.tabIndex = 0;
@@ -167,6 +170,7 @@ function renderOrgs() {
       <div class="cardTop">
         <div>
           <div class="cardTitle">${escapeHtml(o.org)}</div>
+          <div class="muted">${o.count} entr${o.count === 1 ? "y" : "ies"}${o.ongoing ? " • ongoing" : ""}</div>
         </div>
         <div class="badge">${formatHours(o.totalHours)}h</div>
       </div>
@@ -214,8 +218,12 @@ function renderOrgDetail() {
   const filtered = (typeFilter === "ALL") ? list : list.filter((a) => a.type === typeFilter);
   filtered.sort((a, b) => sortActivities(a, b, sortMode));
 
+  const ongoing = !!(state.orgSettings.get(org)?.ongoing);
+  $("btnToggleOngoing").textContent = ongoing ? "Marked ongoing ✓" : "Mark as ongoing";
+
   // Stats
   const stats = summarizeActivities(list);
+  const endShown = ongoing ? "Present" : (stats.endDate || "—");
   $("orgMeta").textContent = `${stats.count} entr${stats.count === 1 ? "y" : "ies"} • ${formatHours(stats.totalHours)} total hours • ${stats.startDate || "—"} → ${endShown}`;
   $("orgStats").innerHTML = renderStatsCards(stats.byTypeHours);
 
@@ -330,6 +338,7 @@ function startSubscriptions(uid) {
     const m = new Map();
     snap.forEach((d) => {
       const data = d.data();
+      if (data?.org) m.set(data.org, { ongoing: !!data.ongoing });
     });
     state.orgSettings = m;
     route();
@@ -341,49 +350,28 @@ function orgDocId(uid, org) {
   return `${uid}__${org}`;
 }
 
-async function editOrgFlow() {
-  const oldOrg = state.currentOrg;
-  if (!state.user || !oldOrg) return;
+async function toggleOngoingForCurrentOrg() {
+  const org = state.currentOrg;
+  if (!state.user || !org) return;
 
-  const next = prompt("Rename organization:", oldOrg);
-  if (next == null) return;
+  const current = !!(state.orgSettings.get(org)?.ongoing);
+  const next = !current;
 
-  const newOrg = next.trim();
-  if (!newOrg || newOrg === oldOrg) return;
-
-  // 1) Update all activities in memory that belong to this org (no Firestore query needed)
-  const affected = state.activities.filter((a) => a.org === oldOrg);
-
-  // Rename activities
-  await Promise.all(
-    affected.map((a) =>
-      updateDoc(doc(db, "activities", a.id), {
-        org: newOrg,
-        updatedAt: serverTimestamp(),
-      })
-    )
-  );
-
-  // 2) Move orgSettings to the new org name
-  const oldSettings = state.orgSettings.get(oldOrg) || {};
-  await setDoc(
-    doc(db, "orgSettings", orgDocId(state.user.uid, newOrg)),
-    {
-      uid: state.user.uid,
-      org: newOrg,
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
-
-  // delete old orgSettings doc (optional, but keeps things clean)
   try {
-    await deleteDoc(doc(db, "orgSettings", orgDocId(state.user.uid, oldOrg)));
-  } catch (e) {}
-
-  // 3) Navigate to the renamed org page
-  window.location.hash = `#/org/${encodeURIComponent(newOrg)}`;
-  route();
+    await setDoc(
+      doc(db, "orgSettings", orgDocId(state.user.uid, org)),
+      {
+        uid: state.user.uid,
+        org,
+        ongoing: next,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch (e) {
+    // best-effort: surface minimal error
+    alert(e?.message || "Failed to update org setting.");
+  }
 }
 
 /* -----------------------------
@@ -533,6 +521,7 @@ function buildOrgStats(activities, orgSettingsMap) {
         count: 0,
         startDate: null,
         endDate: null,
+        ongoing: !!(orgSettingsMap.get(key)?.ongoing),
       });
     }
     const o = m.get(key);
@@ -552,7 +541,11 @@ function buildOrgStats(activities, orgSettingsMap) {
         count: 0,
         startDate: null,
         endDate: null,
+        ongoing: !!settings.ongoing,
       });
+    } else {
+      m.get(org).ongoing = !!settings.ongoing;
+    }
   }
 
   return m;
@@ -581,11 +574,7 @@ function summarizeActivities(list) {
 function renderStatsCards(byTypeHours) {
   const entries = Object.entries(byTypeHours)
     .map(([k, v]) => ({ key: k, hours: v }))
-    .filter((x) => x.hours > 0)          // ✅ hide 0h
     .sort((a, b) => b.hours - a.hours);
-
-  // If everything is 0, show nothing (or return a short message if you want)
-  if (entries.length === 0) return "";
 
   return entries.map((x) => `
     <div class="stat">
@@ -658,11 +647,12 @@ $("btnBackToOrgs").addEventListener("click", () => {
   window.location.hash = "#/orgs";
 });
 
+$("btnToggleOngoing").addEventListener("click", toggleOngoingForCurrentOrg);
+
 $("btnCloseModal").addEventListener("click", closeModal);
 $("btnCancel").addEventListener("click", closeModal);
 $("btnSave").addEventListener("click", saveForm);
 $("btnDelete").addEventListener("click", deleteCurrent);
-$("btnEditOrg").addEventListener("click", editOrgFlow);
 
 $("modal").addEventListener("click", (e) => {
   if (e.target === $("modal")) closeModal();
@@ -720,12 +710,6 @@ onAuthStateChanged(auth, (user) => {
     $("statusText").textContent = `Signed in as ${user.email || "user"}`;
     $("btnAuth").textContent = "Account";
     show($("btnLogout"));
-
-    // Show navigation + add button when logged in
-    $("navOrgs").classList.remove("hidden");
-    $("navTimeline").classList.remove("hidden");
-    $("btnAdd").classList.remove("hidden");
-    
     startSubscriptions(user.uid);
 
     if ((window.location.hash || "").startsWith("#/auth")) {
@@ -737,12 +721,6 @@ onAuthStateChanged(auth, (user) => {
     state.activities = [];
     state.orgSettings = new Map();
     state.currentOrg = null;
-
-    // Hide navigation + add button when logged out
-    $("navOrgs").classList.add("hidden");
-    $("navTimeline").classList.add("hidden");
-    $("btnAdd").classList.add("hidden");
-    
     renderAuth();
   }
 
