@@ -703,32 +703,29 @@ function hideError(id) {
    Auth state + routing boot
 ------------------------------ */
 
-onAuthStateChanged(auth, (user) => {
-  state.user = user || null;
+if (user) {
+  $("statusText").textContent = `Signed in as ${user.email || "user"}`;
+  show($("btnLogout"));
+  show($("mainNav"));
 
-  if (user) {
-    $("statusText").textContent = `Signed in as ${user.email || "user"}`;
-    show($("btnLogout"));
-    show($("mainNav"));   // ← show all 3 at once
+  startSubscriptions(user.uid);
 
-    startSubscriptions(user.uid);
-
-    if ((window.location.hash || "").startsWith("#/auth")) {
-      window.location.hash = "#/orgs";
-    }
-  } else {
-    if (state.unsubActs) state.unsubActs();
-    if (state.unsubOrgs) state.unsubOrgs();
-
-    state.activities = [];
-    state.orgSettings = new Map();
-    state.currentOrg = null;
-
-    hide($("mainNav"));   // ← hide all 3 at once
-    hide($("btnLogout"));
-
-    renderAuth();
+  if ((window.location.hash || "").startsWith("#/auth")) {
+    window.location.hash = "#/orgs";
   }
+} else {
+  if (state.unsubActs) state.unsubActs();
+  if (state.unsubOrgs) state.unsubOrgs();
+
+  state.activities = [];
+  state.orgSettings = new Map();
+  state.currentOrg = null;
+
+  hide($("mainNav"));
+  hide($("btnLogout"));
+
+  renderAuth();
+}
 
   route();
 });
