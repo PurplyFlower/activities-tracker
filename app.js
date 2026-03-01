@@ -20,12 +20,13 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  getDocs,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
 /**
  * Firestore collections:
  * - activities
- * - orgSettings  (per user per org)
+ * - orgs  (per user per org)
  *
  * activities model:
  * {
@@ -45,7 +46,7 @@ import {
  *   updatedAt: serverTimestamp
  * }
  *
- * orgSettings model (doc id: `${uid}__${org}`):
+ * orgs model (doc id: `${uid}__${org}`):
  * {
  *   uid: string,
  *   org: string,
@@ -81,7 +82,7 @@ const $ = (id) => document.getElementById(id);
 const state = {
   user: null,
   activities: [],
-  orgSettings: new Map(), // org -> { ongoing: boolean }
+  orgs: new Map(), // org -> { ongoing: boolean }
   unsubActs: null,
   unsubOrgs: null,
   editingId: null,
@@ -125,8 +126,7 @@ function route() {
 function renderAuth() {
   setActiveNav(null);
   $("statusText").textContent = "Signed out";
-  $("btnAuth").textContent = "Login";
-  hide($("btnLogout"));
+    hide($("btnLogout"));
 
   show($("viewAuth"));
   hide($("viewOrgs"));
@@ -146,7 +146,7 @@ function renderOrgs() {
   const search = ($("orgSearch").value || "").trim().toLowerCase();
   const sortMode = $("orgSort").value;
 
-  const orgMap = buildOrgStats(state.activities, state.orgSettings);
+  const orgMap = buildOrgStats(state.activities, state.orgs);
   let orgs = Array.from(orgMap.values());
 
   if (search) orgs = orgs.filter((o) => o.org.toLowerCase().includes(search));
@@ -218,7 +218,7 @@ function renderOrgDetail() {
   const filtered = (typeFilter === "ALL") ? list : list.filter((a) => a.type === typeFilter);
   filtered.sort((a, b) => sortActivities(a, b, sortMode));
 
-  const ongoing = !!(state.orgSettings.get(org)?.ongoing);
+  const ongoing = !!(state.orgs.get(org)?.ongoing);
   $("btnToggleOngoing").textContent = ongoing ? "Marked ongoing ✓" : "Mark as ongoing";
 
   // Stats
@@ -327,9 +327,9 @@ function startSubscriptions(uid) {
     route();
   });
 
-  // org settings
+  // organizations
   const qOrgs = query(
-    collection(db, "orgSettings"),
+    collection(db, "orgs"),
     where("uid", "==", uid),
     orderBy("org", "asc")
   );
@@ -340,7 +340,7 @@ function startSubscriptions(uid) {
       const data = d.data();
       if (data?.org) m.set(data.org, { ongoing: !!data.ongoing });
     });
-    state.orgSettings = m;
+    state.orgs = m;
     route();
   });
 }
@@ -354,12 +354,12 @@ async function toggleOngoingForCurrentOrg() {
   const org = state.currentOrg;
   if (!state.user || !org) return;
 
-  const current = !!(state.orgSettings.get(org)?.ongoing);
+  const current = !!(state.orgs.get(org)?.ongoing);
   const next = !current;
 
   try {
     await setDoc(
-      doc(db, "orgSettings", orgDocId(state.user.uid, org)),
+      doc(db, "orgs", orgDocId(state.user.uid, org)),
       {
         uid: state.user.uid,
         org,
@@ -384,6 +384,7 @@ function openModalForAdd(prefillOrg = "") {
   $("modalSubtitle").textContent = "Log one session.";
   hide($("btnDelete"));
   clearForm();
+  populateOrgSelect(prefillOrg);
   if (prefillOrg) $("fOrg").value = prefillOrg;
   showModal();
 }
@@ -417,7 +418,7 @@ function showModal() { show($("modal")); }
 function closeModal() { hide($("modal")); }
 
 function clearForm() {
-  $("fOrg").value = "";
+  /* org select populated on open */
   $("fPosition").value = "";
   $("fType").value = "VOL_CLIN";
   $("fDate").value = "";
@@ -455,7 +456,7 @@ async function saveForm() {
 
   const payload = {
     uid: state.user.uid,
-    org: $("fOrg").value.trim(),
+    org: ($("fOrg").value || "").trim(),
     position: $("fPosition").value.trim(),
     type: $("fType").value,
     date: $("fDate").value,
@@ -510,19 +511,18 @@ function formatHours(h) {
   return ("" + v).replace(/\.0$/, "").replace(/(\.\d)0$/, "$1");
 }
 
-function buildOrgStats(activities, orgSettingsMap) {
+function buildOrgStats(activities, orgsMap) {
   const m = new Map();
+
+  // include orgs even if 0 activities
+  for (const [org, settings] of orgsMap.entries()) {
+    m.set(org, { org, totalHours: 0, count: 0, startDate: null, endDate: null, ongoing: !!settings.ongoing });
+  }
+
   for (const a of activities) {
     const key = a.org || "Unknown";
     if (!m.has(key)) {
-      m.set(key, {
-        org: key,
-        totalHours: 0,
-        count: 0,
-        startDate: null,
-        endDate: null,
-        ongoing: !!(orgSettingsMap.get(key)?.ongoing),
-      });
+      m.set(key, { org: key, totalHours: 0, count: 0, startDate: null, endDate: null, ongoing: !!(orgsMap.get(key)?.ongoing) });
     }
     const o = m.get(key);
     const hrs = calcHours(a);
@@ -530,22 +530,6 @@ function buildOrgStats(activities, orgSettingsMap) {
     o.count += 1;
     if (!o.startDate || a.date < o.startDate) o.startDate = a.date;
     if (!o.endDate || a.date > o.endDate) o.endDate = a.date;
-  }
-
-  // Include orgs that have settings but no activities yet (rare, but possible)
-  for (const [org, settings] of orgSettingsMap.entries()) {
-    if (!m.has(org)) {
-      m.set(org, {
-        org,
-        totalHours: 0,
-        count: 0,
-        startDate: null,
-        endDate: null,
-        ongoing: !!settings.ongoing,
-      });
-    } else {
-      m.get(org).ongoing = !!settings.ongoing;
-    }
   }
 
   return m;
@@ -574,7 +558,12 @@ function summarizeActivities(list) {
 function renderStatsCards(byTypeHours) {
   const entries = Object.entries(byTypeHours)
     .map(([k, v]) => ({ key: k, hours: v }))
+    .filter((x) => x.hours > 0)
     .sort((a, b) => b.hours - a.hours);
+
+  if (entries.length === 0) {
+    return `<div class="stat"><div class="statLabel">No hours yet</div><div class="statValue">0h</div></div>`;
+  }
 
   return entries.map((x) => `
     <div class="stat">
@@ -624,6 +613,125 @@ function escapeHtml(s) {
    UI events
 ------------------------------ */
 
+// --- Organizations (CRUD + dropdown) ---
+function orgDocId(uid, orgName) {
+  return `${uid}__${orgName}`;
+}
+
+async function ensureOrgExists(orgName) {
+  const name = (orgName || "").trim();
+  if (!name || !state.user) return;
+  await setDoc(
+    doc(db, "orgs", orgDocId(state.user.uid, name)),
+    { uid: state.user.uid, org: name, ongoing: false, updatedAt: serverTimestamp(), createdAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+async function toggleOngoingForCurrentOrg() {
+  const org = state.currentOrg;
+  if (!state.user || !org) return;
+  const current = !!(state.orgs.get(org)?.ongoing);
+  const next = !current;
+
+  await setDoc(
+    doc(db, "orgs", orgDocId(state.user.uid, org)),
+    { uid: state.user.uid, org, ongoing: next, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+function populateOrgSelect(selectedOrgName = "") {
+  const sel = $("fOrg");
+  if (!sel) return;
+  const orgs = Array.from(state.orgs.keys()).sort((a,b)=>a.localeCompare(b));
+  sel.innerHTML = "";
+
+  if (orgs.length === 0) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "No organizations yet — click + in Organizations";
+    sel.appendChild(opt);
+    return;
+  }
+
+  for (const name of orgs) {
+    const opt = document.createElement("option");
+    opt.value = name;
+    opt.textContent = name;
+    if (name === selectedOrgName) opt.selected = true;
+    sel.appendChild(opt);
+  }
+}
+
+async function createOrgFlow() {
+  if (!state.user) return;
+  const name = prompt("New organization name:");
+  if (!name) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  await ensureOrgExists(trimmed);
+}
+
+async function editOrgFlow() {
+  const org = state.currentOrg;
+  if (!state.user || !org) return;
+
+  const nextName = prompt("Rename organization:", org);
+  if (nextName == null) return;
+  const trimmed = nextName.trim();
+  if (!trimmed || trimmed === org) return;
+
+  const ongoing = !!(state.orgs.get(org)?.ongoing);
+
+  // Create/merge new org doc
+  await setDoc(
+    doc(db, "orgs", orgDocId(state.user.uid, trimmed)),
+    { uid: state.user.uid, org: trimmed, ongoing, updatedAt: serverTimestamp(), createdAt: serverTimestamp() },
+    { merge: true }
+  );
+
+  // Update activities referencing old org name
+  const qActs = query(
+    collection(db, "activities"),
+    where("uid", "==", state.user.uid),
+    where("org", "==", org)
+  );
+
+  const snap = await getDocs(qActs);
+  const updates = [];
+  snap.forEach((d) => updates.push(updateDoc(doc(db, "activities", d.id), { org: trimmed, updatedAt: serverTimestamp() })));
+  await Promise.all(updates);
+
+  // Delete old org doc
+  try { await deleteDoc(doc(db, "orgs", orgDocId(state.user.uid, org))); } catch (e) {}
+
+  window.location.hash = `#/org/${encodeURIComponent(trimmed)}`;
+}
+
+async function deleteOrgFlow() {
+  const org = state.currentOrg;
+  if (!state.user || !org) return;
+
+  const ok = confirm(`Delete organization "${org}"?\\n\\nThis will ALSO delete all activities logged under it.`);
+  if (!ok) return;
+
+  const qActs = query(
+    collection(db, "activities"),
+    where("uid", "==", state.user.uid),
+    where("org", "==", org)
+  );
+
+  const snap = await getDocs(qActs);
+  const dels = [];
+  snap.forEach((d) => dels.push(deleteDoc(doc(db, "activities", d.id))));
+  await Promise.all(dels);
+
+  try { await deleteDoc(doc(db, "orgs", orgDocId(state.user.uid, org))); } catch (e) {}
+
+  window.location.hash = "#/orgs";
+}
+
 $("btnAdd").addEventListener("click", () => {
   if (!state.user) {
     window.location.hash = "#/auth";
@@ -634,9 +742,15 @@ $("btnAdd").addEventListener("click", () => {
   else openModalForAdd("");
 });
 
-$("btnAuth").addEventListener("click", () => {
-  window.location.hash = "#/auth";
-  route();
+});
+
+$("btnNewOrg").addEventListener("click", async () => {
+  if (!state.user) {
+    window.location.hash = "#/auth";
+    route();
+    return;
+  }
+  await createOrgFlow();
 });
 
 $("btnLogout").addEventListener("click", async () => {
@@ -646,6 +760,9 @@ $("btnLogout").addEventListener("click", async () => {
 $("btnBackToOrgs").addEventListener("click", () => {
   window.location.hash = "#/orgs";
 });
+
+$("btnEditOrg").addEventListener("click", editOrgFlow);
+$("btnDeleteOrg").addEventListener("click", deleteOrgFlow);
 
 $("btnToggleOngoing").addEventListener("click", toggleOngoingForCurrentOrg);
 
@@ -708,8 +825,7 @@ onAuthStateChanged(auth, (user) => {
 
   if (user) {
     $("statusText").textContent = `Signed in as ${user.email || "user"}`;
-    $("btnAuth").textContent = "Account";
-    show($("btnLogout"));
+        show($("btnLogout"));
     startSubscriptions(user.uid);
 
     if ((window.location.hash || "").startsWith("#/auth")) {
@@ -719,7 +835,7 @@ onAuthStateChanged(auth, (user) => {
     if (state.unsubActs) state.unsubActs();
     if (state.unsubOrgs) state.unsubOrgs();
     state.activities = [];
-    state.orgSettings = new Map();
+    state.orgs = new Map();
     state.currentOrg = null;
     renderAuth();
   }
