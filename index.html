@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Extracurricular Tracker</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <meta name="color-scheme" content="dark" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">⟡</div>
+      <div>
+        <div class="title">Extracurricular Tracker</div>
+        <div class="subtitle" id="statusText">Signed out</div>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a class="navlink" href="#/orgs" id="navOrgs">Orgs</a>
+      <a class="navlink" href="#/timeline" id="navTimeline">Timeline</a>
+      <button class="btn ghost" id="btnAdd" type="button">Add</button>
+      <div class="spacer"></div>
+      <button class="btn" id="btnAuth" type="button">Login</button>
+      <button class="btn danger hidden" id="btnLogout" type="button">Logout</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <!-- Auth view -->
+    <section id="viewAuth" class="view hidden">
+      <div class="panel">
+        <h1>Sign in</h1>
+        <p class="muted">Use email + password. Your data stays in your Firebase project.</p>
+
+        <div class="grid2">
+          <div>
+            <label>Email</label>
+            <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input id="authPass" type="password" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn" id="btnLogin" type="button">Login</button>
+          <button class="btn ghost" id="btnSignup" type="button">Create account</button>
+        </div>
+
+        <div class="hint">
+          Tip: after you deploy on GitHub Pages, add your Pages URL to Firebase “Authorized domains”.
+        </div>
+
+        <div class="error hidden" id="authError"></div>
+      </div>
+    </section>
+
+    <!-- Orgs view -->
+    <section id="viewOrgs" class="view hidden">
+      <div class="toolbar">
+        <div>
+          <h1>Organizations</h1>
+          <div class="muted">Cards show totals across all your logged activities.</div>
+        </div>
+
+        <div class="toolbarRight">
+          <input id="orgSearch" class="search" type="search" placeholder="Search orgs…" />
+          <select id="orgSort" class="select">
+            <option value="hoursDesc">Sort: Hours ↓</option>
+            <option value="hoursAsc">Sort: Hours ↑</option>
+            <option value="nameAsc">Sort: Name A→Z</option>
+            <option value="nameDesc">Sort: Name Z→A</option>
+            <option value="startAsc">Sort: Start date ↑</option>
+            <option value="startDesc">Sort: Start date ↓</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="orgCards" class="cards"></div>
+
+      <div class="empty hidden" id="orgEmpty">
+        No orgs yet. Click <span class="kbd">Add</span> to log your first activity.
+      </div>
+    </section>
+
+    <!-- Org detail view -->
+    <section id="viewOrgDetail" class="view hidden">
+      <div class="toolbar">
+        <div>
+          <button class="btn ghost" id="btnBackToOrgs" type="button">← Back</button>
+          <h1 id="orgTitle">Organization</h1>
+          <div class="muted" id="orgMeta">—</div>
+        </div>
+
+        <div class="toolbarRight">
+          <button class="btn ghost" id="btnToggleOngoing" type="button" title="Show end date as Present on org cards">
+            Mark as ongoing
+          </button>
+
+          <select id="typeFilter" class="select">
+            <option value="ALL">Filter: All types</option>
+            <option value="VOL_CLIN">Volunteering (Clinical)</option>
+            <option value="VOL_NONCLIN">Volunteering (Non-clinical)</option>
+            <option value="PAID_CLIN">Paid (Clinical)</option>
+            <option value="PAID_NONCLIN">Paid (Non-clinical)</option>
+            <option value="EXTRACURR">Extracurricular</option>
+            <option value="HOBBY">Hobby</option>
+          </select>
+
+          <select id="orgTableSort" class="select">
+            <option value="dateDesc">Sort: Date ↓</option>
+            <option value="dateAsc">Sort: Date ↑</option>
+            <option value="hoursDesc">Sort: Hours ↓</option>
+            <option value="hoursAsc">Sort: Hours ↑</option>
+            <option value="typeAsc">Sort: Type</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="stats" id="orgStats"></div>
+
+      <div class="panel">
+        <div class="tableWrap">
+          <table class="table" id="orgTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Hours</th>
+                <th>Type</th>
+                <th>Position</th>
+                <th>Location</th>
+                <th>Contact</th>
+                <th class="right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orgTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="empty hidden" id="orgDetailEmpty">
+          No activities logged for this org yet.
+        </div>
+      </div>
+    </section>
+
+    <!-- Timeline view -->
+    <section id="viewTimeline" class="view hidden">
+      <div class="toolbar">
+        <div>
+          <h1>Timeline</h1>
+          <div class="muted">All activities across orgs in chronological order.</div>
+        </div>
+
+        <div class="toolbarRight">
+          <select id="timelineSort" class="select">
+            <option value="dateDesc">Sort: Newest first</option>
+            <option value="dateAsc">Sort: Oldest first</option>
+          </select>
+
+          <select id="timelineTypeFilter" class="select">
+            <option value="ALL">Filter: All types</option>
+            <option value="VOL_CLIN">Volunteering (Clinical)</option>
+            <option value="VOL_NONCLIN">Volunteering (Non-clinical)</option>
+            <option value="PAID_CLIN">Paid (Clinical)</option>
+            <option value="PAID_NONCLIN">Paid (Non-clinical)</option>
+            <option value="EXTRACURR">Extracurricular</option>
+            <option value="HOBBY">Hobby</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="tableWrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Org</th>
+                <th>Hours</th>
+                <th>Type</th>
+                <th>Position</th>
+                <th>Location</th>
+                <th>Description</th>
+                <th class="right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="timelineTbody"></tbody>
+          </table>
+        </div>
+
+        <div class="empty hidden" id="timelineEmpty">
+          No activities yet. Click <span class="kbd">Add</span> to log one.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Add/Edit modal -->
+  <div class="modal hidden" id="modal">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHeader">
+        <div>
+          <div class="modalTitle" id="modalTitle">Add activity</div>
+          <div class="muted" id="modalSubtitle">Log one session.</div>
+        </div>
+        <button class="btn ghost" id="btnCloseModal" type="button">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="grid2">
+          <div>
+            <label>Organization *</label>
+            <input id="fOrg" type="text" placeholder="e.g., Mercy Hospital" />
+          </div>
+          <div>
+            <label>Position</label>
+            <input id="fPosition" type="text" placeholder="e.g., Volunteer" />
+          </div>
+
+          <div>
+            <label>Activity type *</label>
+            <select id="fType" class="select">
+              <option value="VOL_CLIN">Volunteering (Clinical)</option>
+              <option value="VOL_NONCLIN">Volunteering (Non-clinical)</option>
+              <option value="PAID_CLIN">Paid (Clinical)</option>
+              <option value="PAID_NONCLIN">Paid (Non-clinical)</option>
+              <option value="EXTRACURR">Extracurricular</option>
+              <option value="HOBBY">Hobby</option>
+            </select>
+          </div>
+          <div>
+            <label>Date *</label>
+            <input id="fDate" type="date" />
+          </div>
+
+          <div>
+            <label>Start time *</label>
+            <input id="fStart" type="time" />
+          </div>
+          <div>
+            <label>End time *</label>
+            <input id="fEnd" type="time" />
+          </div>
+
+          <div>
+            <label>Contact person</label>
+            <input id="fContactName" type="text" placeholder="Name" />
+          </div>
+          <div>
+            <label>Contact email</label>
+            <input id="fContactEmail" type="email" placeholder="name@example.com" />
+          </div>
+
+          <div>
+            <label>Contact phone</label>
+            <input id="fContactPhone" type="tel" placeholder="(555) 555-5555" />
+          </div>
+          <div>
+            <label>Location</label>
+            <input id="fLocation" type="text" placeholder="City / address / department" />
+          </div>
+        </div>
+
+        <div>
+          <label>Description</label>
+          <textarea id="fDesc" rows="4" placeholder="What did you do?"></textarea>
+        </div>
+
+        <div class="error hidden" id="formError"></div>
+      </div>
+
+      <div class="modalFooter">
+        <button class="btn ghost" id="btnCancel" type="button">Cancel</button>
+        <button class="btn danger hidden" id="btnDelete" type="button">Delete</button>
+        <button class="btn" id="btnSave" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase (modular SDK via CDN) -->
+  <script type="module" src="./firebase-config.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
