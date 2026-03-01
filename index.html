@@ -22,6 +22,14 @@
       <a class="navlink" href="#/timeline" id="navTimeline">Timeline</a>
       <button class="btn ghost" id="btnAdd" type="button">+</button>
       <div class="spacer"></div>
+      <div id="mainNav" class="hidden" style="display:flex; align-items:center; gap:10px;">
+        <a class="navlink" href="#/orgs" id="navOrgs">Organizations</a>
+        <a class="navlink" href="#/timeline" id="navTimeline">Timeline</a>
+        <button class="btn ghost" id="btnAdd" type="button">+</button>
+      
+        <button class="btn ghost" id="btnExportCsv" type="button">Export CSV</button>
+        <button class="btn ghost" id="btnExportXlsx" type="button">Export Excel</button>
+      </div>
       <button class="btn" id="btnAuth" type="button">Login</button>
       <button class="btn danger hidden" id="btnLogout" type="button">Logout</button>
     </nav>
@@ -51,7 +59,7 @@
         </div>
 
         <div class="hint">
-          Tip: after you deploy on GitHub Pages, add your Pages URL to Firebase “Authorized domains”.
+          Tip: after you deploy on GitHub Pages, add your Pages URL to  “Authorized domains”.
         </div>
 
         <div class="error hidden" id="authError"></div>
@@ -302,6 +310,7 @@
 
   <!-- Firebase (modular SDK via CDN) -->
   <script type="module" src="./firebase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module" src="./app.js"></script>
 </body>
 </html>
