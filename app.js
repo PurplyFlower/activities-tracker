@@ -574,7 +574,11 @@ function summarizeActivities(list) {
 function renderStatsCards(byTypeHours) {
   const entries = Object.entries(byTypeHours)
     .map(([k, v]) => ({ key: k, hours: v }))
+    .filter((x) => x.hours > 0)          // ✅ hide 0h
     .sort((a, b) => b.hours - a.hours);
+
+  // If everything is 0, show nothing (or return a short message if you want)
+  if (entries.length === 0) return "";
 
   return entries.map((x) => `
     <div class="stat">
