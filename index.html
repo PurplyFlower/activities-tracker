@@ -215,7 +215,10 @@
         <div class="grid2">
           <div>
             <label>Organization *</label>
-            <input id="fOrg" type="text" placeholder="e.g., Mercy Hospital" />
+            <select id="fOrgSelect" class="select"></select>
+          
+            <!-- Only shown when "Create new..." selected -->
+            <input id="fOrgNew" class="hidden" type="text" placeholder="New organization name…" />
           </div>
           <div>
             <label>Position</label>
