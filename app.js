@@ -621,6 +621,74 @@ function formatHours(h) {
   return ("" + v).replace(/\.0$/, "").replace(/(\.\d)0$/, "$1");
 }
 
+function buildExportRows(list) {
+  return list.map((a) => ({
+    Date: a.date || "",
+    Start: a.startTime || "",
+    End: a.endTime || "",
+    Hours: formatHours(calcHours(a)),
+    Type: TYPES[a.type] || a.type || "",
+    Organization: a.org || "",
+    Position: a.position || "",
+    Location: a.location || "",
+    ContactName: a.contactName || "",
+    ContactEmail: a.contactEmail || "",
+    ContactPhone: a.contactPhone || "",
+    Description: a.description || "",
+    UpdatedAt: a.updatedAt?.toDate ? a.updatedAt.toDate().toISOString() : "",
+    CreatedAt: a.createdAt?.toDate ? a.createdAt.toDate().toISOString() : "",
+    Id: a.id || "",
+  }));
+}
+
+function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportActivitiesCSV() {
+  const rows = buildExportRows(state.activities);
+
+  // Build CSV
+  const headers = Object.keys(rows[0] || { Date: "" });
+  const esc = (v) => {
+    const s = String(v ?? "");
+    // Escape quotes and wrap if needed
+    if (/[",\n]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
+    return s;
+  };
+
+  const lines = [];
+  lines.push(headers.map(esc).join(","));
+  for (const r of rows) {
+    lines.push(headers.map((h) => esc(r[h])).join(","));
+  }
+
+  const csv = lines.join("\n");
+  downloadBlob(
+    `activities_${new Date().toISOString().slice(0, 10)}.csv`,
+    new Blob([csv], { type: "text/csv;charset=utf-8" })
+  );
+}
+
+function exportActivitiesXLSX() {
+  if (!window.XLSX) {
+    alert("Excel export library not loaded (XLSX).");
+    return;
+  }
+  const rows = buildExportRows(state.activities);
+  const wb = window.XLSX.utils.book_new();
+  const ws = window.XLSX.utils.json_to_sheet(rows);
+  window.XLSX.utils.book_append_sheet(wb, ws, "Activities");
+  window.XLSX.writeFile(wb, `activities_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
 function buildOrgStats(activities, orgSettingsMap) {
   const m = new Map();
   for (const a of activities) {
@@ -744,6 +812,16 @@ function escapeHtml(s) {
 /* -----------------------------
    UI events
 ------------------------------ */
+
+$("btnExportCsv").addEventListener("click", () => {
+  if (!state.user) return;
+  exportActivitiesCSV();
+});
+
+$("btnExportXlsx").addEventListener("click", () => {
+  if (!state.user) return;
+  exportActivitiesXLSX();
+});
 
 $("btnAdd").addEventListener("click", () => {
   if (!state.user) {
