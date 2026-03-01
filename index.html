@@ -18,12 +18,11 @@
     </div>
 
     <nav class="nav">
-      <a class="navlink" href="#/orgs" id="navOrgs">Orgs</a>
+      <a class="navlink" href="#/orgs" id="navOrgs">Organizations</a>
       <a class="navlink" href="#/timeline" id="navTimeline">Timeline</a>
-      <button class="btn ghost" id="btnAdd" type="button">Add</button>
+      <button class="btn ghost" id="btnAdd" type="button">+</button>
       <div class="spacer"></div>
-      <button class="btn" id="btnAuth" type="button">Login</button>
-      <button class="btn danger hidden" id="btnLogout" type="button">Logout</button>
+<button class="btn danger hidden" id="btnLogout" type="button">Logout</button>
     </nav>
   </header>
 
@@ -67,6 +66,7 @@
         </div>
 
         <div class="toolbarRight">
+          <button class="btn ghost" id="btnNewOrg" type="button" title="New organization">+</button>
           <input id="orgSearch" class="search" type="search" placeholder="Search orgs…" />
           <select id="orgSort" class="select">
             <option value="hoursDesc">Sort: Hours ↓</option>
@@ -96,6 +96,8 @@
         </div>
 
         <div class="toolbarRight">
+          <button class="btn ghost" id="btnEditOrg" type="button">Edit org</button>
+          <button class="btn danger" id="btnDeleteOrg" type="button">Delete org</button>
           <button class="btn ghost" id="btnToggleOngoing" type="button" title="Show end date as Present on org cards">
             Mark as ongoing
           </button>
@@ -215,7 +217,7 @@
         <div class="grid2">
           <div>
             <label>Organization *</label>
-            <input id="fOrg" type="text" placeholder="e.g., Mercy Hospital" />
+            <select id="fOrg" class="select"></select>
           </div>
           <div>
             <label>Position</label>
