@@ -708,8 +708,9 @@ onAuthStateChanged(auth, (user) => {
 
   if (user) {
     $("statusText").textContent = `Signed in as ${user.email || "user"}`;
-    $("btnAuth").textContent = "Account";
     show($("btnLogout"));
+    show($("mainNav"));   // ← show all 3 at once
+
     startSubscriptions(user.uid);
 
     if ((window.location.hash || "").startsWith("#/auth")) {
@@ -718,9 +719,14 @@ onAuthStateChanged(auth, (user) => {
   } else {
     if (state.unsubActs) state.unsubActs();
     if (state.unsubOrgs) state.unsubOrgs();
+
     state.activities = [];
     state.orgSettings = new Map();
     state.currentOrg = null;
+
+    hide($("mainNav"));   // ← hide all 3 at once
+    hide($("btnLogout"));
+
     renderAuth();
   }
 
