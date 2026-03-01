@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Extracurricular Tracker</title>
+  <title>Activities Tracker</title>
   <link rel="stylesheet" href="./styles.css" />
   <meta name="color-scheme" content="dark" />
 </head>
@@ -12,7 +12,7 @@
     <div class="brand">
       <div class="logo" aria-hidden="true">⟡</div>
       <div>
-        <div class="title">Extracurricular Tracker</div>
+        <div class="title">Activities Tracker</div>
         <div class="subtitle" id="statusText">Signed out</div>
       </div>
     </div>
@@ -198,6 +198,35 @@
         </div>
       </div>
     </section>
+  
+    <!-- Account view -->
+    <section id="viewAccount" class="view hidden">
+      <div class="panel">
+        <h1>Account</h1>
+        <p class="muted">Your data is stored in your Firebase project and only accessible to your login.</p>
+
+        <div class="stats">
+          <div class="stat">
+            <div class="statLabel">Email</div>
+            <div class="statValue" id="acctEmail">—</div>
+          </div>
+          <div class="stat">
+            <div class="statLabel">User ID</div>
+            <div class="statValue" id="acctUid">—</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <button class="btn danger" id="btnLogout2" type="button">Logout</button>
+          <button class="btn ghost" id="btnBackHome" type="button">Back to Orgs</button>
+        </div>
+
+        <div class="hint">
+          If login ever breaks, re-check Firebase Authentication → Authorized domains includes <span class="kbd">YOURNAME.github.io</span>.
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Add/Edit modal -->
