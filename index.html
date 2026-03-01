@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Activities Tracker</title>
+  <title>Extracurricular Tracker</title>
   <link rel="stylesheet" href="./styles.css" />
   <meta name="color-scheme" content="dark" />
 </head>
@@ -12,17 +12,17 @@
     <div class="brand">
       <div class="logo" aria-hidden="true">⟡</div>
       <div>
-        <div class="title">Activities Tracker</div>
+        <div class="title">Extracurricular Tracker</div>
         <div class="subtitle" id="statusText">Signed out</div>
       </div>
     </div>
 
     <nav class="nav">
-      <a class="navlink" href="#/orgs" id="navOrgs">Organizations</a>
+      <a class="navlink" href="#/orgs" id="navOrgs">Orgs</a>
       <a class="navlink" href="#/timeline" id="navTimeline">Timeline</a>
-      <button class="btn ghost" id="btnAdd" type="button">+</button>
+      <button class="btn ghost" id="btnAdd" type="button">Add</button>
       <div class="spacer"></div>
-<a class="btn" id="btnAuth" href="#/auth">Login</a>
+      <button class="btn" id="btnAuth" type="button">Login</button>
       <button class="btn danger hidden" id="btnLogout" type="button">Logout</button>
     </nav>
   </header>
@@ -31,10 +31,7 @@
     <!-- Auth view -->
     <section id="viewAuth" class="view hidden">
       <div class="panel">
-        <h1>Welcome</h1>
-        <p class="muted lead">Please log in or create an account to get started.</p>
-        <div class="divider"></div>
-        <h2 class="subhead">Sign in</h2>
+        <h1>Sign in</h1>
         <p class="muted">Use email + password. Your data stays in your Firebase project.</p>
 
         <div class="grid2">
@@ -70,7 +67,6 @@
         </div>
 
         <div class="toolbarRight">
-          <button class="btn ghost" id="btnNewOrg" type="button" title="New organization">+</button>
           <input id="orgSearch" class="search" type="search" placeholder="Search orgs…" />
           <select id="orgSort" class="select">
             <option value="hoursDesc">Sort: Hours ↓</option>
@@ -100,8 +96,6 @@
         </div>
 
         <div class="toolbarRight">
-          <button class="btn ghost" id="btnEditOrg" type="button">Edit org</button>
-          <button class="btn danger" id="btnDeleteOrg" type="button">Delete org</button>
           <button class="btn ghost" id="btnToggleOngoing" type="button" title="Show end date as Present on org cards">
             Mark as ongoing
           </button>
@@ -221,7 +215,7 @@
         <div class="grid2">
           <div>
             <label>Organization *</label>
-            <select id="fOrg" class="select"></select>
+            <input id="fOrg" type="text" placeholder="e.g., Mercy Hospital" />
           </div>
           <div>
             <label>Position</label>
