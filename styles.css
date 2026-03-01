@@ -299,7 +299,3 @@ label{
 .modalFooter{ border-top: 1px solid rgba(31,42,55,.7); }
 .modalTitle{ font-weight: 700; letter-spacing:.2px; }
 .modalBody{ padding: 14px 16px 4px; }
-
-.lead{ font-size: 14px; margin-top: 6px; }
-.subhead{ margin: 14px 0 6px; font-size: 18px; }
-.divider{ height: 1px; background: var(--line); margin: 14px 0; opacity: .8; }
