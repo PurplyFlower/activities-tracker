@@ -1,6 +1,6 @@
-# Extracurricular Tracker (GitHub Pages)
+# Activities Tracker (GitHub Pages)
 
-Minimalist dark tracker for extracurriculars / volunteering.
+Tracker for extracurriculars / volunteering.
 
 **Features**
 - Orgs cards (total hours, start date, end date; end date can be marked as **Present**)
