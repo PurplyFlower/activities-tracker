@@ -657,6 +657,7 @@ $("btnCloseModal").addEventListener("click", closeModal);
 $("btnCancel").addEventListener("click", closeModal);
 $("btnSave").addEventListener("click", saveForm);
 $("btnDelete").addEventListener("click", deleteCurrent);
+$("btnEditOrg").addEventListener("click", editOrgFlow);
 
 $("modal").addEventListener("click", (e) => {
   if (e.target === $("modal")) closeModal();
