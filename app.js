@@ -1,3 +1,5 @@
+/* BUILD: v4 */
+console.log("Activities Tracker build v4 loaded");
 // app.js
 import { auth, db } from "./firebase-config.js";
 
