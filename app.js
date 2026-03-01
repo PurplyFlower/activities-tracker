@@ -374,6 +374,52 @@ async function toggleOngoingForCurrentOrg() {
   }
 }
 
+async function editOrgFlow() {
+  const oldOrg = state.currentOrg;
+  if (!state.user || !oldOrg) return;
+
+  const next = prompt("Rename organization:", oldOrg);
+  if (next == null) return;
+
+  const newOrg = next.trim();
+  if (!newOrg || newOrg === oldOrg) return;
+
+  // 1) Update all activities in memory that belong to this org (no Firestore query needed)
+  const affected = state.activities.filter((a) => a.org === oldOrg);
+
+  // Rename activities
+  await Promise.all(
+    affected.map((a) =>
+      updateDoc(doc(db, "activities", a.id), {
+        org: newOrg,
+        updatedAt: serverTimestamp(),
+      })
+    )
+  );
+
+  // 2) Move orgSettings (ongoing/present flag) to the new org name
+  const oldSettings = state.orgSettings.get(oldOrg) || {};
+  await setDoc(
+    doc(db, "orgSettings", orgDocId(state.user.uid, newOrg)),
+    {
+      uid: state.user.uid,
+      org: newOrg,
+      ongoing: !!oldSettings.ongoing,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  // delete old orgSettings doc (optional, but keeps things clean)
+  try {
+    await deleteDoc(doc(db, "orgSettings", orgDocId(state.user.uid, oldOrg)));
+  } catch (e) {}
+
+  // 3) Navigate to the renamed org page
+  window.location.hash = `#/org/${encodeURIComponent(newOrg)}`;
+  route();
+}
+
 /* -----------------------------
    Modal (Add / Edit)
 ------------------------------ */
