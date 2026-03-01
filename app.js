@@ -613,9 +613,6 @@ function escapeHtml(s) {
 /* -----------------------------
    UI events
 ------------------------------ */
-on("btnAuth", "click", () => {
-  window.location.hash = "#/auth";
-  renderAuth();
 });
 
 
