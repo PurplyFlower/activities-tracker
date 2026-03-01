@@ -439,9 +439,9 @@ function openModalForAdd(prefillOrg = "") {
   $("modalTitle").textContent = "Add activity";
   $("modalSubtitle").textContent = "Log one session.";
   hide($("btnDelete"));
+
   clearForm();
-  populateOrgSelect(prefillOrg || "");
-  if (prefillOrg) $("fOrg").value = prefillOrg;
+  populateOrgSelect(prefillOrg || ""); // <- sets the dropdown correctly
   showModal();
 }
 
