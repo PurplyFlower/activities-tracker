@@ -20,8 +20,11 @@ import {
   onSnapshot,
   serverTimestamp,
   setDoc,
+  getDocs,
+  getDoc,
+  writeBatch,
+  limit,
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
-
 /**
  * Firestore collections:
  * - activities
@@ -350,6 +353,59 @@ function orgDocId(uid, org) {
   return `${uid}__${org}`;
 }
 
+async function renameOrgEverywhere(oldOrg, newOrg) {
+  while (true) {
+    const q = query(
+      collection(db, "activities"),
+      where("uid", "==", state.user.uid),
+      where("org", "==", oldOrg),
+      limit(400)
+    );
+
+    const snap = await getDocs(q);
+    if (snap.empty) break;
+
+    const batch = writeBatch(db);
+    snap.forEach((d) => batch.update(d.ref, { org: newOrg, updatedAt: serverTimestamp() }));
+    await batch.commit();
+  }
+
+  const oldId = orgDocId(state.user.uid, oldOrg);
+  const newId = orgDocId(state.user.uid, newOrg);
+
+  const oldRef = doc(db, "orgSettings", oldId);
+  const newRef = doc(db, "orgSettings", newId);
+
+  const oldSnap = await getDoc(oldRef);
+  if (oldSnap.exists()) {
+    await setDoc(newRef, { ...oldSnap.data(), org: newOrg, updatedAt: serverTimestamp() }, { merge: true });
+    await deleteDoc(oldRef);
+  }
+
+  window.location.hash = `#/org/${encodeURIComponent(newOrg)}`;
+}
+
+async function deleteOrgEverywhere(org) {
+  while (true) {
+    const q = query(
+      collection(db, "activities"),
+      where("uid", "==", state.user.uid),
+      where("org", "==", org),
+      limit(400)
+    );
+
+    const snap = await getDocs(q);
+    if (snap.empty) break;
+
+    const batch = writeBatch(db);
+    snap.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  await deleteDoc(doc(db, "orgSettings", orgDocId(state.user.uid, org))).catch(() => {});
+  window.location.hash = "#/orgs";
+}
+
 async function toggleOngoingForCurrentOrg() {
   const org = state.currentOrg;
   if (!state.user || !org) return;
@@ -384,6 +440,7 @@ function openModalForAdd(prefillOrg = "") {
   $("modalSubtitle").textContent = "Log one session.";
   hide($("btnDelete"));
   clearForm();
+  populateOrgSelect(prefillOrg || "");
   if (prefillOrg) $("fOrg").value = prefillOrg;
   showModal();
 }
@@ -397,7 +454,7 @@ function openModalForEdit(id) {
   $("modalSubtitle").textContent = `Editing ${a.org} on ${a.date}`;
   show($("btnDelete"));
 
-  $("fOrg").value = a.org || "";
+  populateOrgSelect(a.org || "");
   $("fPosition").value = a.position || "";
   $("fType").value = a.type || "EXTRACURR";
   $("fDate").value = a.date || "";
@@ -415,10 +472,64 @@ function openModalForEdit(id) {
 
 function showModal() { show($("modal")); }
 function closeModal() { hide($("modal")); }
+function getOrgNames() {
+  const orgMap = buildOrgStats(state.activities, state.orgSettings);
+  return Array.from(orgMap.keys()).sort((a, b) => a.localeCompare(b));
+}
+
+function populateOrgSelect(selectedOrg = "") {
+  const sel = $("fOrgSelect");
+  const orgs = getOrgNames();
+
+  sel.innerHTML = "";
+
+  const ph = document.createElement("option");
+  ph.value = "";
+  ph.textContent = "Select an organization…";
+  sel.appendChild(ph);
+
+  for (const org of orgs) {
+    const opt = document.createElement("option");
+    opt.value = org;
+    opt.textContent = org;
+    sel.appendChild(opt);
+  }
+
+  const newOpt = document.createElement("option");
+  newOpt.value = "__NEW__";
+  newOpt.textContent = "Create new organization…";
+  sel.appendChild(newOpt);
+
+  if (selectedOrg && !orgs.includes(selectedOrg)) {
+    const injected = document.createElement("option");
+    injected.value = selectedOrg;
+    injected.textContent = selectedOrg;
+    sel.insertBefore(injected, newOpt);
+  }
+
+  sel.value = selectedOrg || "";
+  syncOrgNewVisibility();
+}
+
+function syncOrgNewVisibility() {
+  const isNew = $("fOrgSelect").value === "__NEW__";
+  if (isNew) show($("fOrgNew"));
+  else hide($("fOrgNew"));
+  if (!isNew) $("fOrgNew").value = "";
+}
+
+function getChosenOrgName() {
+  const sel = $("fOrgSelect").value;
+  if (sel === "__NEW__") return $("fOrgNew").value.trim();
+  return sel.trim();
+}
 
 function clearForm() {
-  $("fOrg").value = "";
-  $("fPosition").value = "";
+  if ($("fOrgSelect")) $("fOrgSelect").value = "";
+  if ($("fOrgNew")) {
+    $("fOrgNew").value = "";
+    hide($("fOrgNew"));
+  }  $("fPosition").value = "";
   $("fType").value = "VOL_CLIN";
   $("fDate").value = "";
   $("fStart").value = "";
@@ -432,7 +543,7 @@ function clearForm() {
 }
 
 function validateForm() {
-  const org = $("fOrg").value.trim();
+  const org = getChosenOrgName();
   const type = $("fType").value;
   const date = $("fDate").value;
   const startTime = $("fStart").value;
@@ -455,7 +566,7 @@ async function saveForm() {
 
   const payload = {
     uid: state.user.uid,
-    org: $("fOrg").value.trim(),
+    org: getChosenOrgName(),
     position: $("fPosition").value.trim(),
     type: $("fType").value,
     date: $("fDate").value,
