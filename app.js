@@ -106,6 +106,11 @@ function route() {
     return;
   }
 
+  if (view === "account") {
+    renderAccount();
+    return;
+  }
+
   renderOrgs();
 }
 
@@ -119,6 +124,9 @@ function renderAuth() {
   hide($("viewOrgs"));
   hide($("viewOrgDetail"));
   hide($("viewTimeline"));
+  hide($("viewAccount"));
+  hide($("viewAccount"));
+  hide($("viewAccount"));
 
   window.location.hash = "#/auth";
 }
@@ -257,6 +265,7 @@ function renderTimeline() {
   hide($("viewOrgs"));
   hide($("viewOrgDetail"));
   show($("viewTimeline"));
+  hide($("viewAccount"));
 
   const typeFilter = $("timelineTypeFilter").value;
   const sortMode = $("timelineSort").value;
@@ -289,6 +298,21 @@ function renderTimeline() {
   tbody.querySelectorAll("[data-edit]").forEach((btn) => {
     btn.addEventListener("click", () => openModalForEdit(btn.dataset.edit));
   });
+}
+
+
+function renderAccount() {
+  setActiveNav(null);
+  hide($("viewAuth"));
+  hide($("viewOrgs"));
+  hide($("viewOrgDetail"));
+  hide($("viewTimeline"));
+  show($("viewAccount"));
+
+  const email = state.user?.email || "—";
+  const uid = state.user?.uid || "—";
+  $("acctEmail").textContent = email;
+  $("acctUid").textContent = uid;
 }
 
 /* -----------------------------
@@ -622,12 +646,24 @@ $("btnAdd").addEventListener("click", () => {
 });
 
 $("btnAuth").addEventListener("click", () => {
-  window.location.hash = "#/auth";
+  if (state.user) {
+    window.location.hash = "#/account";
+  } else {
+    window.location.hash = "#/auth";
+  }
   route();
 });
 
 $("btnLogout").addEventListener("click", async () => {
   await signOut(auth);
+});
+
+$("btnLogout2").addEventListener("click", async () => {
+  await signOut(auth);
+});
+
+$("btnBackHome").addEventListener("click", () => {
+  window.location.hash = "#/orgs";
 });
 
 $("btnBackToOrgs").addEventListener("click", () => {
