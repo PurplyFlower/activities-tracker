@@ -770,6 +770,30 @@ $("btnBackToOrgs").addEventListener("click", () => {
 
 $("btnToggleOngoing").addEventListener("click", toggleOngoingForCurrentOrg);
 
+$("fOrgSelect").addEventListener("change", syncOrgNewVisibility);
+
+$("btnRenameOrg").addEventListener("click", async () => {
+  const oldOrg = state.currentOrg;
+  const newOrg = prompt("Rename organization to:", oldOrg);
+  if (!newOrg) return;
+
+  const trimmed = newOrg.trim();
+  if (!trimmed || trimmed === oldOrg) return;
+
+  const ok = confirm(`Rename "${oldOrg}" to "${trimmed}"?`);
+  if (!ok) return;
+
+  await renameOrgEverywhere(oldOrg, trimmed);
+});
+
+$("btnDeleteOrgAll").addEventListener("click", async () => {
+  const org = state.currentOrg;
+  const ok = confirm(`Delete organization "${org}" and ALL its activities?`);
+  if (!ok) return;
+
+  await deleteOrgEverywhere(org);
+});
+
 $("btnCloseModal").addEventListener("click", closeModal);
 $("btnCancel").addEventListener("click", closeModal);
 $("btnSave").addEventListener("click", saveForm);
