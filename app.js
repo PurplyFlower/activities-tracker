@@ -159,8 +159,6 @@ function renderOrgs() {
   else hide($("orgEmpty"));
 
   for (const o of orgs) {
-    const endShown = o.ongoing ? "Present" : (o.endDate || "—");
-
     const card = document.createElement("div");
     card.className = "card";
     card.tabIndex = 0;
@@ -217,9 +215,6 @@ function renderOrgDetail() {
 
   const filtered = (typeFilter === "ALL") ? list : list.filter((a) => a.type === typeFilter);
   filtered.sort((a, b) => sortActivities(a, b, sortMode));
-
-  const ongoing = !!(state.orgSettings.get(org)?.ongoing);
-  $("btnToggleOngoing").textContent = ongoing ? "Marked ongoing ✓" : "Mark as ongoing";
 
   // Stats
   const stats = summarizeActivities(list);
@@ -696,8 +691,6 @@ $("btnLogout").addEventListener("click", async () => {
 $("btnBackToOrgs").addEventListener("click", () => {
   window.location.hash = "#/orgs";
 });
-
-$("btnToggleOngoing").addEventListener("click", toggleOngoingForCurrentOrg);
 
 $("btnCloseModal").addEventListener("click", closeModal);
 $("btnCancel").addEventListener("click", closeModal);
