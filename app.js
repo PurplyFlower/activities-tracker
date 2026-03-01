@@ -55,12 +55,25 @@ import {
  */
 
 const TYPES = {
-  VOL_CLIN: "Volunteering (Clinical)",
-  VOL_NONCLIN: "Volunteering (Non-clinical)",
-  PAID_CLIN: "Paid (Clinical)",
-  PAID_NONCLIN: "Paid (Non-clinical)",
-  EXTRACURR: "Extracurricular",
-  HOBBY: "Hobby",
+  ARTISTIC_ENDEAVORS: "Artistic Endeavors",
+  COMMUNITY_SERVICE_VOLUNTEER_MEDICAL_CLINICAL: "Community Service/Volunteer - Medical/Clinical",
+  COMMUNITY_SERVICE_VOLUNTEER_NOT_MEDICAL_CLINICAL: "Community Service/Volunteer - NOT Medical/Clinical",
+  CONFERENCES_ATTENDED: "Conferences Attended",
+  EXTRACURRICULAR_ACTIVITIES: "Extracurricular Activities",
+  HOBBIES: "Hobbies",
+  HONORS_AWARDS_RECOGNITIONS: "Honors/Awards/Recognitions",
+  INTERCOLLEGIATE_ATHLETICS: "Intercollegiate Athletics",
+  LEADERSHIP_NOT_LISTED_ANYWHERE: "Leadership - Not Listed Anywhere",
+  MILITARY_SERVICE: "Military Service",
+  OTHER: "Other",
+  PAID_EMPLOYMENT_MEDICAL_CLINICAL: "Paid Employment - Medical/Clinical",
+  PAID_EMPLOYMENT_NOT_MEDICAL_CLINICAL: "Paid Employment - NOT Medical/Clinical",
+  PHYSICIAN_SHADOWING_CLINICAL_OBSERVATION: "Physician Shadowing/Clinical Observation",
+  PRESENTATIONS_POSTERS: "Presentations/Posters",
+  PUBLICATIONS: "Publications",
+  RESEARCH_LAB: "Research/Lab",
+  SOCIAL_JUSTICE_ADVOCACY: "Social Justice/Advocacy",
+  TEACHING_TUTORING_TEACHING_ASSISTANT: "Teaching/Tutoring/Teaching Assistant",
 };
 
 const $ = (id) => document.getElementById(id);
