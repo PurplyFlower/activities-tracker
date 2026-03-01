@@ -18,10 +18,11 @@
     </div>
 
     <nav class="nav">
-      <a class="navlink" href="#/orgs" id="navOrgs">Organizations</a>
+      <a class="navlink" href="#/orgs" id="navOrgs">Orgs</a>
       <a class="navlink" href="#/timeline" id="navTimeline">Timeline</a>
-      <button class="btn ghost" id="btnAdd" type="button">+</button>
+      <button class="btn ghost" id="btnAdd" type="button">Add</button>
       <div class="spacer"></div>
+      <button class="btn" id="btnAuth" type="button">Login</button>
       <button class="btn danger hidden" id="btnLogout" type="button">Logout</button>
     </nav>
   </header>
@@ -31,7 +32,7 @@
     <section id="viewAuth" class="view hidden">
       <div class="panel">
         <h1>Sign in</h1>
-        <p class="muted">Use email + password.</p>
+        <p class="muted">Use email + password. Your data stays in your Firebase project.</p>
 
         <div class="grid2">
           <div>
@@ -95,8 +96,10 @@
         </div>
 
         <div class="toolbarRight">
-          <button class="btn ghost" id="btnEditOrg" type="button">Edit Org</button>
-          
+          <button class="btn ghost" id="btnToggleOngoing" type="button" title="Show end date as Present on org cards">
+            Mark as ongoing
+          </button>
+
           <select id="typeFilter" class="select">
             <option value="ALL">Filter: All types</option>
             <option value="VOL_CLIN">Volunteering (Clinical)</option>
