@@ -10,12 +10,12 @@ import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.4/firebas
 
 // TODO: paste your Firebase web app config here:
 const firebaseConfig = {
-  apiKey: "PASTE_ME",
-  authDomain: "PASTE_ME",
-  projectId: "PASTE_ME",
-  storageBucket: "PASTE_ME",
-  messagingSenderId: "PASTE_ME",
-  appId: "PASTE_ME",
+  apiKey: "AIzaSyD9_L1PJhAoGTuuKqa-B52JL0POgULk4Sc",
+  authDomain: "activities-tracker-24cfb.firebaseapp.com",
+  projectId: "activities-tracker-24cfb",
+  storageBucket: "activities-tracker-24cfb.firebasestorage.app",
+  messagingSenderId: "287314551868",
+  appId: "1:287314551868:web:3af2a236f4601630724f39"
 };
 
 export const app = initializeApp(firebaseConfig);
