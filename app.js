@@ -78,6 +78,7 @@ const TYPES = {
 };
 
 const $ = (id) => document.getElementById(id);
+const on = (id, evt, fn) => { const el = $(id); if (el) el.addEventListener(evt, fn); };
 
 const state = {
   user: null,
@@ -612,6 +613,11 @@ function escapeHtml(s) {
 /* -----------------------------
    UI events
 ------------------------------ */
+on("btnAuth", "click", () => {
+  window.location.hash = "#/auth";
+  route();
+});
+
 
 // --- Organizations (CRUD + dropdown) ---
 function orgDocId(uid, orgName) {
@@ -732,7 +738,7 @@ async function deleteOrgFlow() {
   window.location.hash = "#/orgs";
 }
 
-$("btnAdd").addEventListener("click", () => {
+on("btnAdd", "click", () => {
   if (!state.user) {
     window.location.hash = "#/auth";
     return;
@@ -744,7 +750,7 @@ $("btnAdd").addEventListener("click", () => {
 
 });
 
-$("btnNewOrg").addEventListener("click", async () => {
+on("btnNewOrg", "click", async () => {
   if (!state.user) {
     window.location.hash = "#/auth";
     route();
@@ -753,23 +759,23 @@ $("btnNewOrg").addEventListener("click", async () => {
   await createOrgFlow();
 });
 
-$("btnLogout").addEventListener("click", async () => {
+on("btnLogout", "click", async () => {
   await signOut(auth);
 });
 
-$("btnBackToOrgs").addEventListener("click", () => {
+on("btnBackToOrgs", "click", () => {
   window.location.hash = "#/orgs";
 });
 
-$("btnEditOrg").addEventListener("click", editOrgFlow);
-$("btnDeleteOrg").addEventListener("click", deleteOrgFlow);
+on("btnEditOrg", "click", editOrgFlow);
+on("btnDeleteOrg", "click", deleteOrgFlow);
 
-$("btnToggleOngoing").addEventListener("click", toggleOngoingForCurrentOrg);
+on("btnToggleOngoing", "click", toggleOngoingForCurrentOrg);
 
-$("btnCloseModal").addEventListener("click", closeModal);
-$("btnCancel").addEventListener("click", closeModal);
-$("btnSave").addEventListener("click", saveForm);
-$("btnDelete").addEventListener("click", deleteCurrent);
+on("btnCloseModal", "click", closeModal);
+on("btnCancel", "click", closeModal);
+on("btnSave", "click", saveForm);
+on("btnDelete", "click", deleteCurrent);
 
 $("modal").addEventListener("click", (e) => {
   if (e.target === $("modal")) closeModal();
@@ -784,7 +790,7 @@ $("orgTableSort").addEventListener("change", () => renderOrgDetail());
 $("timelineSort").addEventListener("change", () => renderTimeline());
 $("timelineTypeFilter").addEventListener("change", () => renderTimeline());
 
-$("btnLogin").addEventListener("click", async () => {
+on("btnLogin", "click", async () => {
   hideError("authError");
   const email = $("authEmail").value.trim();
   const pass = $("authPass").value;
@@ -795,7 +801,7 @@ $("btnLogin").addEventListener("click", async () => {
   }
 });
 
-$("btnSignup").addEventListener("click", async () => {
+on("btnSignup", "click", async () => {
   hideError("authError");
   const email = $("authEmail").value.trim();
   const pass = $("authPass").value;
@@ -839,9 +845,3 @@ onAuthStateChanged(auth, (user) => {
     state.currentOrg = null;
     renderAuth();
   }
-
-  route();
-});
-
-window.addEventListener("hashchange", route);
-if (!window.location.hash) window.location.hash = "#/orgs";
