@@ -49,7 +49,6 @@ import {
  * {
  *   uid: string,
  *   org: string,
- *   ongoing: boolean,
  *   updatedAt: serverTimestamp
  * }
  */
@@ -168,7 +167,6 @@ function renderOrgs() {
       <div class="cardTop">
         <div>
           <div class="cardTitle">${escapeHtml(o.org)}</div>
-          <div class="muted">${o.count} entr${o.count === 1 ? "y" : "ies"}${o.ongoing ? " • ongoing" : ""}</div>
         </div>
         <div class="badge">${formatHours(o.totalHours)}h</div>
       </div>
@@ -218,7 +216,6 @@ function renderOrgDetail() {
 
   // Stats
   const stats = summarizeActivities(list);
-  const endShown = ongoing ? "Present" : (stats.endDate || "—");
   $("orgMeta").textContent = `${stats.count} entr${stats.count === 1 ? "y" : "ies"} • ${formatHours(stats.totalHours)} total hours • ${stats.startDate || "—"} → ${endShown}`;
   $("orgStats").innerHTML = renderStatsCards(stats.byTypeHours);
 
@@ -333,7 +330,6 @@ function startSubscriptions(uid) {
     const m = new Map();
     snap.forEach((d) => {
       const data = d.data();
-      if (data?.org) m.set(data.org, { ongoing: !!data.ongoing });
     });
     state.orgSettings = m;
     route();
@@ -343,30 +339,6 @@ function startSubscriptions(uid) {
 function orgDocId(uid, org) {
   // stable doc id so toggling doesn't create duplicates
   return `${uid}__${org}`;
-}
-
-async function toggleOngoingForCurrentOrg() {
-  const org = state.currentOrg;
-  if (!state.user || !org) return;
-
-  const current = !!(state.orgSettings.get(org)?.ongoing);
-  const next = !current;
-
-  try {
-    await setDoc(
-      doc(db, "orgSettings", orgDocId(state.user.uid, org)),
-      {
-        uid: state.user.uid,
-        org,
-        ongoing: next,
-        updatedAt: serverTimestamp(),
-      },
-      { merge: true }
-    );
-  } catch (e) {
-    // best-effort: surface minimal error
-    alert(e?.message || "Failed to update org setting.");
-  }
 }
 
 async function editOrgFlow() {
@@ -392,14 +364,13 @@ async function editOrgFlow() {
     )
   );
 
-  // 2) Move orgSettings (ongoing/present flag) to the new org name
+  // 2) Move orgSettings to the new org name
   const oldSettings = state.orgSettings.get(oldOrg) || {};
   await setDoc(
     doc(db, "orgSettings", orgDocId(state.user.uid, newOrg)),
     {
       uid: state.user.uid,
       org: newOrg,
-      ongoing: !!oldSettings.ongoing,
       updatedAt: serverTimestamp(),
     },
     { merge: true }
@@ -562,7 +533,6 @@ function buildOrgStats(activities, orgSettingsMap) {
         count: 0,
         startDate: null,
         endDate: null,
-        ongoing: !!(orgSettingsMap.get(key)?.ongoing),
       });
     }
     const o = m.get(key);
@@ -582,11 +552,7 @@ function buildOrgStats(activities, orgSettingsMap) {
         count: 0,
         startDate: null,
         endDate: null,
-        ongoing: !!settings.ongoing,
       });
-    } else {
-      m.get(org).ongoing = !!settings.ongoing;
-    }
   }
 
   return m;
